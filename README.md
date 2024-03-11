@@ -2,19 +2,19 @@
 A full stack Starknet Dapp with functionalities that allows staking of ERC20 tokens deployed to Starknet and getting a reward for the staked token after a period of time. 
 
 The project has three tokens to interact with:
-1. `BWCERC20TOKEN`: ERC20 Token that users can use to interact with the project. 
-2. `ReceiptToken`: ERC20 Token that users gets as a receipt for staking the `BWCERC20TOKEN`. This token has no intrisic value and can only be used to withdraw the `BWCERC20TOKEN` after the staking period has elapsed.
-3. `RewardToken`: ERC20 token that users get as a reward for staking `BWCERC20TOKEN` after a specific period of time.
+1. `STRKERC20TOKEN`: ERC20 Token that users can use to interact with the project. 
+2. `ReceiptToken`: ERC20 Token that users gets as a receipt for staking the `STRKERC20TOKEN`. This token has no intrisic value and can only be used to withdraw the `STRKERC20TOKEN` after the staking period has elapsed.
+3. `RewardToken`: ERC20 token that users get as a reward for staking `STRKERC20TOKEN` after a specific period of time.
 
 ## How It Works
-1. User stakes a specific amount of `BWCERC20TOKEN` into the contract.
-    - The contract sends the equivalent of `ReceiptToken` into the user's wallet as a receipt for staking `BWCERC20TOKEN`.
+1. User stakes a specific amount of `STRKERC20TOKEN` into the contract.
+    - The contract sends the equivalent of `ReceiptToken` into the user's wallet as a receipt for staking `STRKERC20TOKEN`.
     - The staked token is locked in the contract for period of time.
     - Within this period which the token is locked, the user cannot withdraw the staked token unless the locked period is over.
     - The user can still stake more tokens within this locked period.
     - If at anytime during the locked period, the user stakes more token, the locked period is reset.
-2. After the locked period is over, the user is then allowed to withdraw their staked `BWCERC20TOKEN`. 
-3. After withdrawal of `BWCERC20TOKEN`, the user is rewarded with `RewardToken` that is directly propotional to the amount of `BWCERC20TOKEN` token staked.
+2. After the locked period is over, the user is then allowed to withdraw their staked `STRKERC20TOKEN`. 
+3. After withdrawal of `STRKERC20TOKEN`, the user is rewarded with `RewardToken` that is directly propotional to the amount of `STRKERC20TOKEN` token staked.
 
 
 ## Getting Started
@@ -77,7 +77,7 @@ The project has three tokens to interact with:
 │   │   │       ├── FlexContainer.jsx
 │   │   │       └── index.js
 │   │   └── utils
-│   │       ├── bwc_abi.json
+│   │       ├── STRK_abi.json
 │   │       └── index.js
 │   ├── tailwind.config.js
 │   └── vite.config.js
@@ -86,8 +86,8 @@ The project has three tokens to interact with:
 ├── package-lock.json
 ├── package.json
 ├── src
-│   ├── bwc_erc20_token.cairo
-│   ├── bwc_staking_contract.cairo
+│   ├── STRK_erc20_token.cairo
+│   ├── STRK_staking_contract.cairo
 │   ├── lib.cairo
 │   ├── receipt_token.cairo
 │   └── reward_token.cairo
