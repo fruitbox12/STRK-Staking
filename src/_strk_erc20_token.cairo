@@ -24,7 +24,7 @@ trait IERC20<TContractState> {
 }
 
 #[starknet::contract]
-mod BWCERC20Token {
+mod STRKERC20Token {
     // importing necessary libraries
     use starknet::{ContractAddress, get_caller_address, contract_address_const};
     use core::zeroable::Zeroable;
@@ -106,7 +106,7 @@ mod BWCERC20Token {
         self.owner.write(recipient);
 
         self.name.write('BlockheaderToken');
-        self.symbol.write('BWC');
+        self.symbol.write('STRK');
         self.decimals.write(18);
         self.total_supply.write(1000000);
         self.balances.write(recipient, 1000000);
@@ -296,7 +296,7 @@ mod BWCERC20Token {
 #[cfg(test)]
 mod test {
     use core::serde::Serde;
-    use super::{IERC20, BWCERC20Token, IERC20Dispatcher, IERC20DispatcherTrait};
+    use super::{IERC20, STRKERC20Token, IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::ContractAddress;
     use starknet::contract_address::contract_address_const;
     use core::ArrayTrait;
@@ -307,7 +307,7 @@ mod test {
 
     // helper function
     fn deploy_contract() -> ContractAddress {
-        let erc20_contract_class = declare('BWCERC20Token');
+        let erc20_contract_class = declare('STRKERC20Token');
         let file = FileTrait::new('data/constructor_args.txt');
         let constructor_args = read_txt(@file);
 
@@ -336,7 +336,7 @@ mod test {
         let contract_address = deploy_contract();
         let dispatcher = IERC20Dispatcher { contract_address };
         let symbol = dispatcher.get_symbol();
-        assert(symbol == 'BWC', Errors::INCORRECT_SYMBOLS);
+        assert(symbol == 'STRK', Errors::INCORRECT_SYMBOLS);
     }
 
     #[test]
