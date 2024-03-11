@@ -6,21 +6,21 @@ trait IStake<TContractState> {
     fn withdraw(ref self: TContractState, amount: u256) -> bool;
     fn get_stake_balance(self: @TContractState, staker: ContractAddress) -> u256;
     fn get_next_withdraw_time(self: @TContractState) -> u64;
-    fn get_bwc_token_address(self: @TContractState) -> ContractAddress;
+    fn get_strk_token_address(self: @TContractState) -> ContractAddress;
     fn get_reward_token_address(self: @TContractState) -> ContractAddress;
     fn get_receipt_token_address(self: @TContractState) -> ContractAddress;
     fn get_total_stake(self: @TContractState) -> u256 ;
 }
 
 #[starknet::contract]
-mod BWCStakingContract {
+mod STRKStakingContract {
     /////////////////////////////
     //LIBRARY IMPORTS
     /////////////////////////////        
     use core::serde::Serde;
     use core::integer::u64;
     use core::zeroable::Zeroable;
-    use basic_staking_dapp::bwc_staking_contract::IStake;
+    use basic_staking_dapp::strk_staking_contract::IStake;
     use basic_staking_dapp::erc20_token::{IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::{ContractAddress, get_caller_address, get_contract_address, get_block_timestamp};
 
@@ -30,7 +30,7 @@ mod BWCStakingContract {
     #[storage]
     struct Storage {
         staker: LegacyMap::<ContractAddress, StakeDetail>,
-        bwcerc20_token_address: ContractAddress,
+        strkerc20_token_address: ContractAddress,
         receipt_token_address: ContractAddress,
         reward_token_address: ContractAddress,
         total_staked: u256,
@@ -89,7 +89,7 @@ mod BWCStakingContract {
         const NOT_TOKEN_ADDRESS: felt252 = 'STAKE: Not token address';
         const ZERO_AMOUNT: felt252 = 'Zero amount';
         const INSUFFICIENT_FUNDS: felt252 = 'STAKE: Insufficient funds';
-        const LOW_CBWCRT_BALANCE: felt252 = 'STAKE: Low balance';
+        const LOW_CSTRKRT_BALANCE: felt252 = 'STAKE: Low balance';
         const NOT_WITHDRAW_TIME: felt252 = 'STAKE: Not yet withdraw time';
         const LOW_CONTRACT_BALANCE: felt252 = 'STAKE: Low contract balance';
         const AMOUNT_NOT_ALLOWED: felt252 = 'STAKE: Amount not allowed';
@@ -99,11 +99,11 @@ mod BWCStakingContract {
     #[constructor]
     fn constructor(
         ref self: ContractState,
-        bwcerc20_token_address: ContractAddress,
+        strkerc20_token_address: ContractAddress,
         receipt_token_address: ContractAddress,
         reward_token_address: ContractAddress,
     ) {
-        self.bwcerc20_token_address.write(bwcerc20_token_address);
+        self.strkerc20_token_address.write(strkerc20_token_address);
         self.reward_token_address.write(reward_token_address);
         self.receipt_token_address.write(receipt_token_address);
     }
@@ -112,15 +112,15 @@ mod BWCStakingContract {
     impl IStakeImpl of super::IStake<ContractState> {
         // Function allows caller to stake their token
         // @amount: Amount of token to stake
-        // @BWCERC20TokenAddr: Contract address of token to stake
+        // @STRKERC20TokenAddr: Contract address of token to stake
         // @receipt_token: Contract address of receipt token
         fn stake(ref self: ContractState, amount: u256) -> bool {
             // CHECK -> EFFECTS -> INTERACTION
 
             let caller: ContractAddress = get_caller_address(); // Caller address
             let address_this: ContractAddress = get_contract_address(); // Address of this contract
-            let bwc_erc20_contract = IERC20Dispatcher {
-                contract_address: self.bwcerc20_token_address.read()
+            let strk_erc20_contract = IERC20Dispatcher {
+                contract_address: self.strkerc20_token_address.read()
             };
             let receipt_contract = IERC20Dispatcher {
                 contract_address: self.receipt_token_address.read()
@@ -129,17 +129,17 @@ mod BWCStakingContract {
             assert(!caller.is_zero(), Errors::ADDRESS_ZERO); // Caller cannot be address 0
             assert(amount > 0, Errors::ZERO_AMOUNT); // Cannot stake zero amount
             assert(
-                amount <= bwc_erc20_contract.balance_of(caller), Errors::INSUFFICIENT_FUNDS
+                amount <= strk_erc20_contract.balance_of(caller), Errors::INSUFFICIENT_FUNDS
             ); // Caller cannot stake more than token balance
 
             assert(
-                receipt_contract.balance_of(address_this) >= amount, Errors::LOW_CBWCRT_BALANCE
+                receipt_contract.balance_of(address_this) >= amount, Errors::LOW_CSTRKRT_BALANCE
             ); // Contract must have enough receipt token to transfer out
 
             // STEP 1: Staker must first allow this contract to spend `amount` of Stake Tokens from staker's account
 
             assert(
-                bwc_erc20_contract.allowance(caller, address_this) >= amount,
+                strk_erc20_contract.allowance(caller, address_this) >= amount,
                 Errors::AMOUNT_NOT_ALLOWED
             ); // This contract should be allowed to spend `amount` stake tokens from staker account
 
@@ -154,7 +154,7 @@ mod BWCStakingContract {
 
             // STEP 2
             // transfer stake token from caller to this contract
-            bwc_erc20_contract.transfer_from(caller, address_this, amount);
+            strk_erc20_contract.transfer_from(caller, address_this, amount);
 
             //Increase the total staked
             let previous_stake_total = self.total_staked.read();
@@ -201,13 +201,13 @@ mod BWCStakingContract {
 
         // Function allows caller to withdraw their staked token and get rewarded
         // @amount: Amount of token to withdraw
-        // @BWCERC20TokenAddr: Contract address of token to withdraw
+        // @STRKERC20TokenAddr: Contract address of token to withdraw
         fn withdraw(ref self: ContractState, amount: u256) -> bool {
             // get address of caller
             let caller = get_caller_address();
             let address_this: ContractAddress = get_contract_address(); // Address of this contract
-            let bwc_erc20_contract = IERC20Dispatcher {
-                contract_address: self.bwcerc20_token_address.read()
+            let strk_erc20_contract = IERC20Dispatcher {
+                contract_address: self.strkerc20_token_address.read()
             };
             let receipt_contract = IERC20Dispatcher {
                 contract_address: self.receipt_token_address.read()
@@ -234,8 +234,8 @@ mod BWCStakingContract {
                 'Not enough reward token to send'
             ); // This contract must have enough reward token to transfer to Staker
             assert(
-                bwc_erc20_contract.balance_of(address_this) >= amount,
-                'Not enough BWC token to send'
+                strk_erc20_contract.balance_of(address_this) >= amount,
+                'Not enough STRK token to send'
             ); // This contract must have enough stake token to transfer back to Staker
             assert(
                 receipt_contract.allowance(caller, address_this) >= amount,
@@ -259,7 +259,7 @@ mod BWCStakingContract {
             reward_contract.transfer(caller, amount);
 
             // Send back stake token to caller account
-            bwc_erc20_contract.transfer(caller, amount);
+            strk_erc20_contract.transfer(caller, amount);
 
             //Decrease the total staked
             let previous_stake_total = self.total_staked.read();
@@ -273,8 +273,8 @@ mod BWCStakingContract {
         }
 
 
-        fn get_bwc_token_address(self: @ContractState) -> ContractAddress {
-            self.bwcerc20_token_address.read()
+        fn get_strk_token_address(self: @ContractState) -> ContractAddress {
+            self.strkerc20_token_address.read()
         }
 
         fn get_reward_token_address(self: @ContractState) -> ContractAddress {
