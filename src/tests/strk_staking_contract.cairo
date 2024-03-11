@@ -1,0 +1,1 @@
+mod test_strk_staking_contract;
